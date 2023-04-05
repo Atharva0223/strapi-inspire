@@ -1,0 +1,45 @@
+{
+  "kind": "collectionType",
+  "collectionName": "device_infos",
+  "info": {
+    "singularName": "device-info",
+    "pluralName": "device-infos",
+    "displayName": "Device info"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "uniqueId": {
+      "type": "integer"
+    },
+    "deviceId": {
+      "type": "string"
+    },
+    "osVersion": {
+      "type": "string"
+    },
+    "osName": {
+      "type": "string"
+    },
+    "devicePlatform": {
+      "type": "string"
+    },
+    "appVersion": {
+      "type": "string"
+    },
+    "deviceTimezone": {
+      "type": "string"
+    },
+    "deviceCurrentTimestamp": {
+      "type": "string"
+    },
+    "token": {
+      "type": "string"
+    },
+    "modelName": {
+      "type": "string"
+    }
+  }
+}

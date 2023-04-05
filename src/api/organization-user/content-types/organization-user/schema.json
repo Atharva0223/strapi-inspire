@@ -1,0 +1,47 @@
+{
+  "kind": "collectionType",
+  "collectionName": "organization_users",
+  "info": {
+    "singularName": "organization-user",
+    "pluralName": "organization-users",
+    "displayName": "Organization user",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "first_name": {
+      "type": "string"
+    },
+    "last_name": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "email": {
+      "type": "email"
+    },
+    "password": {
+      "type": "password"
+    },
+    "role": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.role",
+      "inversedBy": "organization-users",
+      "configurable": true
+    },
+    "organization": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::organization.organization"
+    },
+    "isDeleted": {
+      "type": "boolean",
+      "default": false
+    }
+  }
+}
