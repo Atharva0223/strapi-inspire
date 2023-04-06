@@ -1,0 +1,120 @@
+{
+  "kind": "collectionType",
+  "collectionName": "oppurtunities",
+  "info": {
+    "singularName": "oppurtunity",
+    "pluralName": "oppurtunities",
+    "displayName": "Oppurtunity",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "organization": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::organization.organization",
+      "inversedBy": "oppurtunities"
+    },
+    "organization_user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::organization-user.organization-user",
+      "inversedBy": "oppurtunities"
+    },
+    "profile": {
+      "type": "string"
+    },
+    "skills": {
+      "type": "string"
+    },
+    "opportunity_type": {
+      "type": "enumeration",
+      "enum": [
+        "internship",
+        "volunteer"
+      ]
+    },
+    "city": {
+      "type": "string"
+    },
+    "part_time": {
+      "type": "boolean"
+    },
+    "openings": {
+      "type": "integer"
+    },
+    "start_date": {
+      "type": "enumeration",
+      "enum": [
+        "immediately",
+        "later"
+      ]
+    },
+    "durations": {
+      "type": "string"
+    },
+    "months": {
+      "type": "string"
+    },
+    "responsibilities": {
+      "type": "text"
+    },
+    "restart_career": {
+      "type": "boolean"
+    },
+    "stipend_type": {
+      "type": "enumeration",
+      "enum": [
+        "fixed",
+        "negotiable",
+        "performance",
+        "unpaid"
+      ]
+    },
+    "currency": {
+      "type": "string"
+    },
+    "stipend_value": {
+      "type": "decimal"
+    },
+    "payment_options": {
+      "type": "enumeration",
+      "enum": [
+        "hourly",
+        "daily",
+        "weekly",
+        "biweekly",
+        "monthly",
+        "lumpsum"
+      ]
+    },
+    "perks": {
+      "type": "customField",
+      "options": [
+        "certificate",
+        "letter of recommendation",
+        "flexible work hours",
+        "5 days a week",
+        "informal dress code",
+        "free snacks and beverages"
+      ],
+      "customField": "plugin::multi-select.multi-select"
+    },
+    "ppo": {
+      "type": "boolean"
+    },
+    "cover_letter": {
+      "allowedTypes": [
+        "files"
+      ],
+      "type": "media",
+      "multiple": false
+    },
+    "assessment_questions": {
+      "type": "text"
+    }
+  }
+}

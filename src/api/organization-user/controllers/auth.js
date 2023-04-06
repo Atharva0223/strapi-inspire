@@ -6,23 +6,31 @@ module.exports = {
   async login(ctx) {
     try {
       const { email, password } = ctx.request.body;
-  
+
       if (!email || !password) {
-        return ctx.badRequest(null, [{ messages: [{ id: "Email or password missing" }] }]);
+        return ctx.badRequest(null, [
+          { messages: [{ id: "Email or password missing" }] },
+        ]);
       }
-  
-      const finduser = await strapi.query("api::organization-user.organization-user").findOne({ email });
-  
+
+      const finduser = await strapi
+        .query("api::organization-user.organization-user")
+        .findOne({ email });
+
       if (!finduser || !finduser.password) {
-        return ctx.badRequest(null, [{ messages: [{ id: "Invalid email or password" }] }]);
+        return ctx.badRequest(null, [
+          { messages: [{ id: "Invalid email or password" }] },
+        ]);
       }
-  
+
       const isValidPassword = await bcrypt.compare(password, finduser.password);
-  
+
       if (!isValidPassword) {
-        return ctx.badRequest(null, [{ messages: [{ id: "Invalid password" }] }]);
+        return ctx.badRequest(null, [
+          { messages: [{ id: "Invalid password" }] },
+        ]);
       }
-  
+
       const sqlQuery = `
         SELECT ou.id,
                ou.first_name,
@@ -36,34 +44,34 @@ module.exports = {
         LEFT JOIN up_roles ur ON ourl.role_id = ur.id
         LEFT JOIN organization_users_organization_links ouol ON ouol.organization_user_id = ou.id
         LEFT JOIN organizations orgs ON ouol.organization_id = orgs.id
-        WHERE ou.id = $1`;
-      
+        WHERE ou.id = $1;`;
+
       const result = await client.query(sqlQuery, [finduser.id]);
-  
-      const token = jwt.sign({
-        id: result.rows[0].id,
-        role: result.rows[0].role,
-        organization: result.rows[0].organization,
-      }, process.env.JWT_SECRET, {
-        expiresIn: "1d",
-      });
-  
+
+      const token = jwt.sign(
+        {
+          id: result.rows[0].id,
+          role: result.rows[0].role,
+          organization: result.rows[0].organization,
+        },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: "1d",
+        }
+      );
+
       ctx.send({
         jwt: token,
         result: result.rows,
       });
-  
-      
-  
     } catch (error) {
       console.log(error);
     }
   },
-  
 
   //------------------------------------------------------------------------------------------------------
 
-//register endpoint
+  //register endpoint
 
   //------------------------------------------------------------------------------------------------------
   async register(ctx) {
@@ -136,6 +144,17 @@ module.exports = {
           expiresIn: "30d",
         }
       );
+
+      const adminRole = await strapi
+        .query("role", "users-permissions")
+        .findOne({ type: "admin" });
+      if (newUser.role.id === adminRole.id) {
+        const userPluginModel = strapi.plugins["users-permissions"].models.user;
+        await userPluginModel.update(
+          { id: newUser.id },
+          { adminCount: userPluginModel.sequelize.literal("adminCount + 1") }
+        );
+      }
 
       // Set the token in the response
       ctx.send({

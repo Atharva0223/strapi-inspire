@@ -16,6 +16,12 @@
     },
     "organization_details": {
       "type": "string"
+    },
+    "oppurtunities": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::oppurtunity.oppurtunity",
+      "mappedBy": "organization"
     }
   }
 }

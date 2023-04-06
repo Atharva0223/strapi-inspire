@@ -42,6 +42,12 @@
     "isDeleted": {
       "type": "boolean",
       "default": false
+    },
+    "oppurtunities": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::oppurtunity.oppurtunity",
+      "mappedBy": "organization_user"
     }
   }
 }
