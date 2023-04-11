@@ -1,6 +1,15 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const _ = require('lodash');
+const utils = require('@strapi/utils');
+const { getAbsoluteAdminUrl, getAbsoluteServerUrl, sanitize } = utils;
+const { ApplicationError, ValidationError } = utils.errors;
+
 const client = require("../../../../config/pg");
+
+const {
+  validateRegisterBody,
+} = require('./validation/auth');
 
 module.exports = {
   async login(ctx) {
@@ -75,104 +84,93 @@ module.exports = {
 
   //------------------------------------------------------------------------------------------------------
   async register(ctx) {
-    const {
-      first_name,
-      last_name,
-      email,
-      password,
-      phone,
-      role,
-      organization,
-    } = ctx.request.body;
+    const pluginStore = await strapi.store({ type: 'plugin', name: 'users-permissions' });
 
-    // Check if all required fields are provided
-    if (
-      !email ||
-      !password ||
-      !first_name ||
-      !last_name ||
-      !phone ||
-      !role ||
-      !organization
-    ) {
-      return ctx.badRequest(null, [{ messages: ["All fields are required"] }]);
+    const settings = await pluginStore.get({ key: 'advanced' });
+
+    if (!settings.allow_register) {
+      throw new ApplicationError('Register action is currently disabled');
     }
 
-    try {
-      // Check if user already exists in the database
-      const finduser = await strapi
-        .query("api::organization-user.organization-user")
-        .findOne({
-          where: {
-            email: email,
-            isDeleted: false,
-          },
-        });
+    const params = {
+      ..._.omit(ctx.request.body, [
+        'confirmed',
+        'blocked',
+        'confirmationToken',
+        'resetPasswordToken',
+        'provider',
+      ]),
+      provider: 'local',
+    };
 
-      if (finduser) {
-        return ctx.badRequest(null, [
-          { messages: [{ id: "email already exists" }] },
-        ]);
-      }
+    await validateRegisterBody(params);
 
-      const hashedPassword = await bcrypt.hash(password, 10);
-      // Create a new user in the database
-      const newUser = await strapi
-        .query("api::organization-user.organization-user")
-        .create({
-          data: {
-            first_name,
-            last_name,
-            email,
-            phone,
-            password: hashedPassword,
-            role,
-            organization,
-          },
-        });
+    const role = await strapi
+      .query('plugin::users-permissions.role')
+      .findOne({ where: { name: 'Admin' } });
 
-      // Generate JWT token
-      const token = jwt.sign(
-        {
-          id: newUser.id,
-          organization,
-          email,
-          role,
-        },
-        process.env.JWT_SECRET,
-        {
-          expiresIn: "30d",
-        }
-      );
+    if (!role) {
+      throw new ApplicationError('Impossible to find the default role');
+    }
 
-      const adminRole = await strapi
-        .query("role", "users-permissions")
-        .findOne({ type: "admin" });
-      if (newUser.role.id === adminRole.id) {
-        const userPluginModel = strapi.plugins["users-permissions"].models.user;
-        await userPluginModel.update(
-          { id: newUser.id },
-          { adminCount: userPluginModel.sequelize.literal("adminCount + 1") }
-        );
-      }
+    const { email, username, provider } = params;
 
-      // Set the token in the response
-      ctx.send({
-        jwt: token,
-        newUser: {
-          first_name,
-          last_name,
-          phone,
-          email,
-          role,
-          organization,
-        },
+    const identifierFilter = {
+      $or: [
+        { email: email.toLowerCase() },
+        { username: email.toLowerCase() },
+        { username },
+        { email: username },
+      ],
+    };
+
+    const conflictingUserCount = await strapi.query('api::organization-user.organization-user').count({
+      where: { ...identifierFilter, provider },
+    });
+
+    console.log(conflictingUserCount);
+
+    if (conflictingUserCount > 0) {
+      throw new ApplicationError('Email or Username are already taken');
+    }
+
+    if (settings.unique_email) {
+      const conflictingUserCount = await strapi.query('plugin::users-permissions.user').count({
+        where: { ...identifierFilter },
       });
-    } catch (err) {
-      console.error(err);
-      return ctx.badRequest(null, [
-        { messages: ["An error occurred while creating a new user"] },
-      ]);
+
+      if (conflictingUserCount > 0) {
+        throw new ApplicationError('Email or Username are already taken');
+      }
     }
+
+    const newUser = {
+      ...params,
+      role: role.id,
+      email: email.toLowerCase(),
+      username,
+      confirmed: !settings.email_confirmation,
+    };
+
+    const user = await getService('user').add(newUser);
+
+    const sanitizedUser = await sanitizeUser(user, ctx);
+
+    if (settings.email_confirmation) {
+      try {
+        await getService('user').sendConfirmationEmail(sanitizedUser);
+      } catch (err) {
+        throw new ApplicationError(err.message);
+      }
+
+      return ctx.send({ user: sanitizedUser });
+    }
+
+    const jwt = getService('jwt').issue(_.pick(user, ['id']));
+
+    return ctx.send({
+      jwt,
+      user: sanitizedUser,
+    });
   },
 };

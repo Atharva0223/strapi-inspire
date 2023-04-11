@@ -12,6 +12,9 @@
   },
   "pluginOptions": {},
   "attributes": {
+    "username": {
+      "type": "string"
+    },
     "first_name": {
       "type": "string"
     },
@@ -48,6 +51,27 @@
       "relation": "oneToMany",
       "target": "api::oppurtunity.oppurtunity",
       "mappedBy": "organization_user"
+    },
+    "provider": {
+      "type": "string"
+    },
+    "resetPasswordToken": {
+      "type": "string",
+      "private": true,
+      "searchable": false
+    },
+    "confirmationToken": {
+      "type": "string",
+      "private": true,
+      "searchable": false
+    },
+    "confirmed": {
+      "type": "boolean",
+      "default": false
+    },
+    "blocked": {
+      "type": "boolean",
+      "default": false
     }
   }
 }

@@ -13,7 +13,7 @@
       "visible": false
     },
     "content-type-builder": {
-      "visible": false
+      "visible": true
     }
   },
   "attributes": {
@@ -21,23 +21,23 @@
       "type": "string",
       "minLength": 3,
       "required": true,
-      "configurable": false
+      "configurable": true
     },
     "description": {
       "type": "string",
-      "configurable": false
+      "configurable": true
     },
     "type": {
       "type": "string",
       "unique": true,
-      "configurable": false
+      "configurable": true
     },
     "permissions": {
       "type": "relation",
       "relation": "oneToMany",
       "target": "plugin::users-permissions.permission",
       "mappedBy": "role",
-      "configurable": false
+      "configurable": true
     },
     "users": {
       "type": "relation",
